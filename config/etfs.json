@@ -1,0 +1,12 @@
+[
+ {"code":"510300","name":"沪深300ETF","sector":"宽基","strategy_base_high":null,"strategy_base_source":"待人工确认"},
+ {"code":"512010","name":"医药ETF","sector":"医药","strategy_base_high":null,"strategy_base_source":"待人工确认"},
+ {"code":"159928","name":"消费ETF","sector":"消费","strategy_base_high":null,"strategy_base_source":"待人工确认"},
+ {"code":"588000","name":"科创50ETF","sector":"科技","strategy_base_high":null,"strategy_base_source":"待人工确认"},
+ {"code":"516160","name":"新能源ETF","sector":"新能源","strategy_base_high":null,"strategy_base_source":"待人工确认"},
+ {"code":"159995","name":"芯片ETF","sector":"半导体","strategy_base_high":null,"strategy_base_source":"待人工确认"},
+ {"code":"159920","name":"恒生ETF","sector":"港股宽基","strategy_base_high":null,"strategy_base_source":"待人工确认"},
+ {"code":"513180","name":"恒生科技ETF","sector":"港股科技","strategy_base_high":null,"strategy_base_source":"待人工确认"},
+ {"code":"510880","name":"红利ETF","sector":"红利/周期","strategy_base_high":null,"strategy_base_source":"待人工确认"},
+ {"code":"159937","name":"油气ETF","sector":"商品/油气","strategy_base_high":null,"strategy_base_source":"待人工确认"}
+]
