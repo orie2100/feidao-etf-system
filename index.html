@@ -1,9 +1,365 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101827"><title>飞刀ETF策略看板</title><style>
-:root{color-scheme:dark;--bg:#0b1220;--card:#142033;--line:#293a52;--text:#eef4fc;--muted:#9aabc0;--green:#39ce91;--red:#ff7379;--amber:#f5c15a;--blue:#79b5ff}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"PingFang SC",sans-serif}.wrap{max-width:760px;margin:auto;padding:16px}.head,.row{display:flex;justify-content:space-between;gap:10px;align-items:center}.head{margin:8px 0 18px}.brand{font-weight:800;font-size:20px}.sub,.muted,.small{font-size:12px;color:var(--muted)}.tag,.status{font-size:11px;padding:5px 9px;border-radius:99px;background:#3b3019;color:#f8d17b}.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.metric{background:#0d1929;border:1px solid var(--line);border-radius:11px;padding:11px}.metric b{display:block;font-size:18px;margin-top:4px}.bar{display:flex;gap:3px;margin:12px 0 6px;height:9px}.bar i{flex:1;background:#35445a;border-radius:9px}.tiers{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}.item{padding:12px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.right{text-align:right}.ok{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--amber)}.notice{font-size:12px;padding:10px;border-radius:10px;background:#302819;color:#f5d58e;margin-top:10px}button{background:#2b6ca9;color:white;border:0;border-radius:9px;padding:9px 12px}.small{overflow-wrap:anywhere}</style></head><body><div class="wrap">
-<div class="head"><div><div class="brand">🗡️ 飞刀ETF策略看板</div><div class="sub">V1.1 · 每日收盘行情 · 手机端</div></div><span class="tag">自动更新</span></div>
-<div class="card"><div class="row"><b>数据状态</b><button onclick="loadData()">刷新</button></div><div id="meta" class="muted">正在读取行情文件…</div><div class="notice">日线收盘数据，不是盘中实时行情。若接口失败会标记旧数据/失败，不会伪造价格。</div></div>
-<div class="grid"><div class="metric"><span class="muted">成功更新</span><b id="success">—</b></div><div class="metric"><span class="muted">观察标的</span><b id="total">—</b></div></div>
-<div class="card"><b>五阶价格空间</b><div class="bar"><i></i><i></i><i></i><i></i><i></i></div><div class="tiers"><span>1.0–0.8</span><span>0.8–0.6</span><span>0.6–0.4</span><span>0.4–0.3</span><span>&lt;0.3</span></div><div class="small">档位=收盘价÷用户确认的策略基准高点。基准未确认时不输出档位。</div></div>
-<div class="card"><b>ETF观察列表</b><div id="items"><div class="muted">等待行情数据…</div></div></div><div class="card"><b>策略口径</b><div class="small">五阶：≥0.8一阶；≥0.6二阶；≥0.4三阶；≥0.3四阶；其余五阶。禁买：收盘价≥历史最低价×3。长线建仓：基准价×0.40/0.35/0.30，预算20%/30%/50%。网格：每跌5%买一格，买入后上涨10%为对应卖出参考价。</div></div><div class="small">仅按策略参数计算和提示，不构成投资建议，不执行交易。基准高点需人工确认；高低点受数据覆盖范围和复权口径影响。</div></div>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<title>飞刀ETF智能分析系统</title>
+<style>
+:root{--bg:#0b1220;--panel:#121d2e;--panel2:#172438;--line:#27364b;--text:#edf3fb;--muted:#91a2b8;--green:#35c98a;--red:#ff6b72;--amber:#f6bd4b;--blue:#69a9ff;--purple:#b69aff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;padding-bottom:84px}
+button,input,select{font:inherit}button{cursor:pointer}.app{max-width:720px;margin:auto;padding:0 16px}
+header{padding:20px 0 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-size:20px;font-weight:800;letter-spacing:.2px}.sub{font-size:11px;color:var(--muted);margin-top:3px}
+.pill{font-size:11px;border:1px solid #66542a;color:#ffd477;background:#342b19;padding:5px 9px;border-radius:99px;white-space:nowrap}
+.pill.ok{background:#153b31;border-color:#2c6b52;color:#75e0b1}.pill.bad{background:#49252c;border-color:#7a3b43;color:#ff9ba0}
+h2{font-size:17px;margin:22px 0 12px}h3{font-size:14px;margin:0 0 10px}
+.card{background:linear-gradient(145deg,var(--panel),#101a2a);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;box-shadow:0 8px 24px #0002}
+.hero{background:linear-gradient(135deg,#183553,#14263d 55%,#1c2940);border-color:#315274}
+.eyebrow{color:#9fb7d4;font-size:12px}.big{font-size:29px;font-weight:800;margin:4px 0}.muted{color:var(--muted);font-size:12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#0e1929;border:1px solid var(--line);padding:12px;border-radius:12px}.metric strong{display:block;font-size:19px;margin-top:5px}
+.green{color:var(--green)}.red{color:var(--red)}.amber{color:var(--amber)}.blue{color:var(--blue)}
+.bar{height:9px;background:#26364b;border-radius:20px;overflow:hidden;display:flex;margin:12px 0 8px}.bar span{height:100%}
+.split{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.split div{font-size:10px;color:var(--muted)}.split b{display:block;color:var(--text);font-size:12px;margin-top:3px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.tab{border:1px solid var(--line);background:#111d2d;color:var(--muted);border-radius:99px;padding:8px 13px;white-space:nowrap;font-size:12px}.tab.active{background:#244b72;border-color:#3c75a9;color:#fff}
+label{display:block;color:var(--muted);font-size:12px;margin:10px 0 5px}input,select{width:100%;background:#0c1726;color:var(--text);border:1px solid #33445c;border-radius:10px;padding:11px 12px;outline:none}input:focus,select:focus{border-color:var(--blue)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;border-radius:10px;padding:11px 14px;background:#2c6eae;color:white;font-weight:700}.btn.secondary{background:#26374d;color:#dce8f7}.btn.small{padding:7px 10px;font-size:12px}
+.notice{padding:11px 12px;border-radius:11px;background:#2e281a;border:1px solid #66532b;color:#f5d58e;font-size:12px;margin-top:10px}
+.status{display:inline-block;border-radius:99px;padding:5px 9px;font-size:11px;font-weight:700;background:#26364a;color:#c9d8e9}
+.status.ok{background:#153b31;color:#75e0b1}.status.warn{background:#44351a;color:#ffd276}.status.bad{background:#49252c;color:#ff9ba0}
+.tierbar{display:flex;gap:3px;height:12px;margin:14px 0 8px}.tierbar i{display:block;flex:1;border-radius:4px;background:#344258}.tierbar i.on{background:var(--blue);box-shadow:0 0 0 1px #c3dcff inset}
+.tierlabels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:500}
+.signal{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.signal:last-child{border:0}.dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none}
+.etf{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.etf:last-child{border:0}.ticker{font-size:11px;color:var(--muted)}
+.check{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}.check input{width:18px;height:18px;margin:0;accent-color:#48b98a}
+.page{display:none}.page.active{display:block}
+nav{position:fixed;z-index:5;bottom:0;left:0;right:0;background:#0d1726f2;backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:9px max(12px,env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:center}
+.navinner{width:min(720px,100%);display:grid;grid-template-columns:repeat(5,1fr);gap:3px}.navbtn{border:0;background:none;color:#8395ad;font-size:10px;padding:5px 0}.navbtn span{display:block;font-size:19px;margin-bottom:2px}.navbtn.active{color:#8fc4ff}
+.hidden{display:none!important}.foot{font-size:10px;color:#71839b;text-align:center;padding:18px 0 8px}
+@media(min-width:600px){.app{padding:0 22px}.grid2{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><div class="brand">🗡️ 飞刀ETF智能分析</div><div class="sub">日线收盘行情 · 档位 · 网格 · 资金纪律</div></div><span class="pill" id="dataBadge">读取行情中…</span></header>
+
+<main>
+<section class="page active" id="home">
+<div class="card hero">
+ <div class="row"><span class="eyebrow">策略资金总览</span><span class="status">本机预算设置</span></div>
+ <div class="big" id="totalDisplay">—</div><div class="muted">总策略资金 · 本机浏览器保存 · 不代表实际持仓</div>
+ <div class="bar"><span style="width:30%;background:#4b9df0"></span><span style="width:30%;background:#35c98a"></span><span style="width:20%;background:#b69aff"></span><span style="width:20%;background:#f6bd4b"></span></div>
+ <div class="split"><div>网格仓<b>30% · <span id="gridAmt">—</span></b></div><div>长线仓<b>30% · <span id="longAmt">—</span></b></div><div>致敬仓<b>20% · <span id="tributeAmt">—</span></b></div><div>备用仓<b>20% · <span id="reserveAmt">—</span></b></div></div>
+</div>
+<div class="card">
+ <div class="row"><b>行情数据状态</b><button class="btn small" onclick="loadData()">刷新</button></div>
+ <div id="dataMeta" class="muted">正在读取 data/market.json…</div>
+ <div class="notice">日线收盘数据，不是盘中实时行情。上游接口失败会标记「旧数据 / 获取失败」，不伪造价格；策略基准高点须人工确认，未确认时不输出五阶档位。</div>
+</div>
+<div class="grid2">
+ <div class="metric"><span class="muted">观察标的</span><strong id="mWatch">—</strong></div>
+ <div class="metric"><span class="muted">禁买预警</span><strong class="red" id="mBlocked">—</strong></div>
+ <div class="metric"><span class="muted">深度低估区</span><strong class="green" id="mDeep">—</strong></div>
+ <div class="metric"><span class="muted">数据异常</span><strong class="amber" id="mBad">—</strong></div>
+</div>
+<h2>今日重点信号</h2>
+<div class="card">
+ <div class="signal"><i class="dot" style="background:var(--red)"></i><div><b>防追高铁律</b><div class="muted" id="sigBan">等待行情数据…</div></div></div>
+ <div class="signal"><i class="dot" style="background:var(--amber)"></i><div><b>策略基准待确认</b><div class="muted" id="sigBase">等待行情数据…</div></div></div>
+ <div class="signal"><i class="dot" style="background:var(--amber)"></i><div><b>技术指标数据待确认</b><div class="muted">月线10/20月均线与MACD未接入真实行情，不生成趋势确认。</div></div></div>
+</div>
+<h2>策略观察列表</h2>
+<div class="card" id="watchList"><div class="muted">等待行情数据…</div></div>
+</section>
+
+<section class="page" id="analysis">
+<h2>单只ETF策略分析</h2>
+<div class="card">
+ <div class="row"><h3>选择观察标的</h3><span class="status">可手动试算</span></div>
+ <select id="etfSelect"><option value="">读取行情中…</option></select>
+ <div class="fields">
+  <div><label>当前价格（元）</label><input id="price" type="number" step="0.001" placeholder="行情读取后自动填入"></div>
+  <div><label>策略基准高点（元）</label><input id="peak" type="number" step="0.001" placeholder="须人工确认，留空不输出档位"></div>
+  <div><label>历史最低点（元）</label><input id="low" type="number" step="0.001" placeholder="来自行情文件"></div>
+  <div><label>网格锚定价（元）</label><input id="anchor" type="number" step="0.001" placeholder="默认当前价格"></div>
+ </div>
+ <button class="btn" style="width:100%;margin-top:12px" onclick="analyze()">重新计算策略</button>
+ <div class="notice">档位 = 当前价 ÷ 人工确认的策略基准高点。基准未确认时不输出档位与长线建仓价格；手动输入的数值仅用于纯计算试算，不代表实时行情。</div>
+</div>
+<div class="card">
+ <div class="row"><div><div class="muted">归一化价格比值</div><div class="big" id="ratio">—</div></div><span id="tierStatus" class="status warn">待确认</span></div>
+ <div class="tierbar" id="tierBar"><i></i><i></i><i></i><i></i><i></i></div>
+ <div class="tierlabels"><span>高位 1.0</span><span>0.8</span><span>0.6</span><span>0.4</span><span>0.3</span><span>极低</span></div>
+ <div class="notice" id="actionText">等待行情数据与策略基准…</div>
+ <div class="signal"><i class="dot" style="background:var(--red)"></i><div><b id="banTitle">防追高检查</b><div class="muted" id="banText">禁买线 = 历史最低价 × 3，须有真实行情才能判断。</div></div></div>
+</div>
+<div class="card">
+ <h3>网格仓计算器</h3>
+ <div class="fields">
+  <div><label>网格资金（元）</label><input id="gridBudget" type="number" value="30000"></div>
+  <div><label>每跌买入（%）</label><input id="dropPct" type="number" value="5"></div>
+  <div><label>每涨卖出（%）</label><input id="risePct" type="number" value="10"></div>
+  <div><label>网格档数</label><input id="gridLevels" type="number" value="5" min="1" max="20"></div>
+ </div>
+ <div class="row" style="margin:12px 0 4px"><span class="muted">每格预算</span><b id="perGrid">—</b></div>
+ <div style="overflow-x:auto"><table><thead><tr><th>档位</th><th>买入参考价</th><th>上涨卖出价</th><th>每格金额</th></tr></thead><tbody id="gridTable"></tbody></table></div>
+</div>
+<div class="card">
+ <h3>长线仓分批建仓</h3>
+ <div class="muted">按基准高点归一化比值 0.40 / 0.35 / 0.30，预算比例 20% / 30% / 50%。金额按 10 只标的平均分摊，仅为预算演示。</div>
+ <div style="overflow-x:auto"><table><thead><tr><th>触发比值</th><th>对应价格</th><th>投入比例</th><th>预算金额</th></tr></thead><tbody id="longTable"></tbody></table></div>
+</div>
+<div class="card">
+ <h3>致敬仓阶梯预算</h3>
+ <div class="muted">跌破 0.30 后，每再下跌 1%，投入致敬仓预算的 10%。以下为预算演示，不代表实际触发单。</div>
+ <div class="grid2" style="margin-top:10px">
+  <div class="metric"><span class="muted">每档投入</span><strong id="tributeStep">—</strong></div>
+  <div class="metric"><span class="muted">致敬仓总预算</span><strong id="tributeTotal">—</strong></div>
+ </div>
+ <div class="muted" style="margin-top:9px">示例触发序列：0.300 → 0.297 → 0.294 → 0.291……</div>
+</div>
+</section>
+
+<section class="page" id="portfolio">
+<h2>组合与资金管理</h2>
+<div class="card">
+ <h3>总资金设置</h3><label>策略总资金（元，仅保存在本机浏览器）</label><input id="totalInput" type="number" value="1000000">
+ <div class="grid2" style="margin-top:10px">
+  <div class="metric"><span class="muted">网格仓 30%</span><strong id="pGrid">—</strong></div>
+  <div class="metric"><span class="muted">长线仓 30%</span><strong id="pLong">—</strong></div>
+  <div class="metric"><span class="muted">致敬仓 20%</span><strong id="pTribute">—</strong></div>
+  <div class="metric"><span class="muted">备用仓 20%</span><strong id="pReserve">—</strong></div>
+ </div><button class="btn" style="width:100%;margin-top:12px" onclick="updateBudget()">更新资金分配</button>
+</div>
+<div class="card">
+ <h3>策略观察列表（真实行情状态）</h3>
+ <div class="muted">清单来自 config/etfs.json；状态来自每日收盘更新任务，不代表当前推荐或已通过筛选。</div>
+ <div id="portfolioList"></div>
+</div>
+<div class="card">
+ <h3>标的筛选四标准</h3>
+ <div class="signal"><i class="dot" style="background:var(--blue)"></i><div>日均成交额 ≥ 1亿元</div></div>
+ <div class="signal"><i class="dot" style="background:var(--blue)"></i><div>年化波动率 20%–40%</div></div>
+ <div class="signal"><i class="dot" style="background:var(--blue)"></i><div>至少4个低相关行业，跨消费/医药/科技/周期/港股等</div></div>
+ <div class="signal"><i class="dot" style="background:var(--blue)"></i><div>历史最大回撤 ≥60%，当前比值低于0.5</div></div>
+ <div class="notice">系统未接入上述筛选数据，所有标的筛选状态均为「待数据验证」。</div>
+</div>
+</section>
+
+<section class="page" id="ledger">
+<h2>持仓台账</h2>
+<div class="card">
+ <h3>新增一笔交易记录</h3>
+ <div class="fields">
+  <div><label>ETF代码</label><input id="tradeCode" value=""></div>
+  <div><label>仓位类型</label><select id="tradeType"><option>网格仓</option><option>长线仓</option><option>致敬仓</option></select></div>
+  <div><label>买卖方向</label><select id="tradeSide"><option>买入</option><option>卖出</option></select></div>
+  <div><label>成交价格</label><input id="tradePrice" type="number" step="0.001" value=""></div>
+  <div><label>成交份额</label><input id="tradeQty" type="number" value=""></div>
+  <div><label>费用（元）</label><input id="tradeFee" type="number" value="0"></div>
+ </div><button class="btn" style="width:100%;margin-top:12px" onclick="addTrade()">保存到本机台账</button>
+</div>
+<div class="card">
+ <div class="row"><h3>交易记录</h3><button class="btn secondary small" onclick="clearTrades()">清空</button></div>
+ <div style="overflow-x:auto"><table><thead><tr><th>时间</th><th>代码</th><th>仓位/方向</th><th>价格</th><th>份额</th></tr></thead><tbody id="tradeTable"></tbody></table></div>
+ <div class="muted" style="margin-top:9px">记录仅保存在当前浏览器本地。卸载浏览器或清理网站数据可能导致记录丢失。</div>
+</div>
+</section>
+
+<section class="page" id="review">
+<h2>策略复核清单</h2>
+<div class="card">
+ <div class="row"><h3>每月初检查</h3><span class="status warn" id="monthProgress">0/4 已完成</span></div>
+ <div id="monthChecks">
+  <label class="check"><input type="checkbox">检查每只ETF当前价格档位</label>
+  <label class="check"><input type="checkbox">检查月线10月线、20月线和MACD状态</label>
+  <label class="check"><input type="checkbox">重新校准网格基准价并检查条件单</label>
+  <label class="check"><input type="checkbox">更新持仓台账与成本位置</label>
+ </div>
+</div>
+<div class="card">
+ <div class="row"><h3>每季度检查</h3><span class="status warn" id="quarterProgress">0/5 已完成</span></div>
+ <div id="quarterChecks">
+  <label class="check"><input type="checkbox">检查赛道分散和行业相关性</label>
+  <label class="check"><input type="checkbox">检查PE/PB历史分位，验证低估判断</label>
+  <label class="check"><input type="checkbox">高估赛道减仓、低估赛道补充资金</label>
+  <label class="check"><input type="checkbox">检查涨幅达到最低点3倍的禁买铁律</label>
+  <label class="check"><input type="checkbox">评估备用仓使用方案</label>
+ </div>
+</div>
+<div class="card">
+ <h3>技术信号说明</h3>
+ <div class="signal"><i class="dot" style="background:var(--amber)"></i><div><b>价格跌破10月线</b><div class="muted">手册规则：分笔卖出；具体比例由用户确认。</div></div></div>
+ <div class="signal"><i class="dot" style="background:var(--amber)"></i><div><b>月线MACD死叉</b><div class="muted">手册规则：分笔卖出。</div></div></div>
+ <div class="signal"><i class="dot" style="background:var(--red)"></i><div><b>10月线下穿20月线</b><div class="muted">手册规则：清仓提示。</div></div></div>
+ <div class="notice">系统没有真实月线数据，以上仅为规则说明，不代表任何ETF已触发信号。</div>
+</div>
+</section>
+</main>
+<div class="foot">日线收盘数据 · 策略学习与计算工具 · 非投资建议 · 不执行交易</div>
+</div>
+
+<nav><div class="navinner">
+ <button class="navbtn active" data-page="home"><span>⌂</span>总览</button>
+ <button class="navbtn" data-page="analysis"><span>⌁</span>ETF分析</button>
+ <button class="navbtn" data-page="portfolio"><span>▦</span>组合</button>
+ <button class="navbtn" data-page="ledger"><span>▤</span>台账</button>
+ <button class="navbtn" data-page="review"><span>✓</span>复核</button>
+</div></nav>
 <script>
-const f=x=>x==null?'—':Number(x).toFixed(3);function tier(r){if(r>=.8)return'一阶｜只卖不买';if(r>=.6)return'二阶｜观望不新增';if(r>=.4)return'三阶｜逐步轻仓';if(r>=.3)return'四阶｜网格+长线';return'五阶｜极端超跌'}async function loadData(){try{let r=await fetch('./data/market.json?t='+Date.now());if(!r.ok)throw Error('HTTP '+r.status);let d=await r.json();meta.textContent=`生成时间：${d.generated_at_beijing||'尚未运行'} · ${d.source||''} · ${d.price_basis||''}`;success.textContent=(d.success_count??0)+'/'+(d.total_count??0);total.textContent=d.total_count??0;items.innerHTML=(d.items||[]).map(x=>{let ratio=x.strategy_base_high&&x.close?x.close/x.strategy_base_high:null,blocked=x.low&&x.close>=x.low*3;return `<div class="item"><div class="row"><div><b>${x.name||x.code}</b><div class="muted">${x.code} · ${x.sector||''} · ${x.date||''}</div></div><div class="right"><b>${f(x.close)}</b><div class="${x.change_pct>0?'bad':x.change_pct<0?'ok':'muted'}">${x.change_pct==null?'—':(x.change_pct>0?'+':'')+x.change_pct.toFixed(2)+'%'}</div></div></div><div class="row"><span class="status">${ratio?tier(ratio):'策略基准待确认'}</span><span class="small">高 ${f(x.high)} / 低 ${f(x.low)}</span></div><div class="row"><span class="small ${blocked?'bad':''}">${blocked?'触发3倍禁买线':'3倍禁买线：'+(x.low?f(x.low*3):'—')}</span><span class="small ${x.status==='ok'?'ok':x.status==='stale'?'warn':'bad'}">${x.status==='ok'?'正常':x.status==='stale'?'旧数据':'获取失败'}</span></div>${x.error?`<div class="small warn">${x.error}</div>`:''}</div>`}).join('')||'<div class="muted">尚无行情记录，先运行GitHub Actions。</div>'}catch(e){meta.textContent='行情读取失败：'+e.message+'。请先运行GitHub Actions。'}}loadData();</script></body></html>
+const $=id=>document.getElementById(id);
+const money=n=>"¥"+Number(n||0).toLocaleString("zh-CN",{maximumFractionDigits:0});
+const fmt=n=>(n==null||isNaN(n))?"—":Number(n).toFixed(3);
+const pct=n=>(n==null||isNaN(n))?"—":(n>0?"+":"")+Number(n).toFixed(2)+"%";
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let funds=[], market=null;
+
+function tier(r){if(r>=.8)return[1,"一阶 · 高位泡沫区","只卖不买，长线仓分批兑现"];if(r>=.6)return[2,"二阶 · 中性震荡区","小仓位持赢观望，不新增买入"];if(r>=.4)return[3,"三阶 · 价值回落区","逐步轻仓买入，观察走势"];if(r>=.3)return[4,"四阶 · 深度低估区","网格 + 长线双轨运行，加大加仓力度"];return[5,"五阶 · 极致超跌区","评估致敬仓规则，严格控制预算"]}
+function nav(page){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.page===page));window.scrollTo(0,0)}
+function statusInfo(s){return s==="ok"?["正常","ok"]:s==="stale"?["旧数据","warn"]:["获取失败","bad"]}
+
+async function loadData(){
+ const meta=$("dataMeta"), badge=$("dataBadge");
+ try{
+  const r=await fetch("./data/market.json?t="+Date.now());
+  if(!r.ok)throw Error("HTTP "+r.status);
+  const d=await r.json();
+  market=d;
+  funds=(d.items||[]).map(x=>{
+   const usable=(x.status==="ok"||x.status==="stale")&&x.close!=null;
+   return {code:x.code,name:x.name,sector:x.sector,date:x.date,rawStatus:x.status,error:x.error,
+    price:usable?Number(x.close):null,change:usable&&x.change_pct!=null?Number(x.change_pct):null,
+    high:x.high!=null?Number(x.high):null,low:x.low!=null?Number(x.low):null,
+    peak:(x.strategy_base_high!=null&&Number(x.strategy_base_high)>0)?Number(x.strategy_base_high):null};
+  });
+  const ok=(d.success_count??0),all=(d.total_count??funds.length);
+  meta.textContent="生成时间："+(d.generated_at_beijing||d.generated_at||"尚未运行")+" · "+(d.source||"")+" · "+(d.price_basis||"")+" · 成功 "+ok+"/"+all;
+  badge.textContent="成功 "+ok+"/"+all;
+  badge.className="pill "+(ok===all?"ok":ok>0?"":"bad");
+  renderHome();renderSelect();renderPortfolio();
+ }catch(e){
+  market=null;funds=[];
+  meta.textContent="行情读取失败："+e.message+"。请稍后刷新，或检查 GitHub Actions 的每日更新任务。";
+  badge.textContent="行情未就绪";badge.className="pill bad";
+  ["mWatch","mBlocked","mDeep","mBad"].forEach(id=>$(id).textContent="—");
+  $("sigBan").textContent="行情未就绪，暂不判断禁买线。";
+  $("sigBase").textContent="行情未就绪，无法确认策略基准。";
+  $("watchList").innerHTML='<div class="muted">尚无行情记录。稍后刷新，或先运行 GitHub Actions 更新任务。</div>';
+  $("portfolioList").innerHTML='<div class="muted">尚无行情记录。</div>';
+  $("etfSelect").innerHTML='<option value="manual">手动输入试算（非实时行情）</option>';
+  clearPriceInputs();analyze();
+ }
+}
+function clearPriceInputs(){["price","peak","low","anchor"].forEach(id=>$(id).value="")}
+function renderHome(){
+ const usable=funds.filter(x=>x.price>0&&x.low>0);
+ const blocked=usable.filter(x=>x.price>=x.low*3).length;
+ const withBase=funds.filter(x=>x.peak>0&&x.price>0);
+ const deep=withBase.filter(x=>x.price/x.peak<.4).length;
+ const bad=funds.filter(x=>x.rawStatus!=="ok").length;
+ $("mWatch").textContent=funds.length?funds.length+"只":"—";
+ $("mBlocked").textContent=usable.length?blocked+"只":"—";
+ $("mDeep").textContent=withBase.length?deep+"只":"待确认";
+ $("mBad").textContent=funds.length?bad+"项":"—";
+ $("sigBan").textContent=usable.length?("按已获取行情，"+(blocked?blocked+" 只标的触及「历史最低价×3」禁买线，禁止新增买入。":"当前无标的触发禁买线。")):"有效行情不足，暂不判断禁买线。";
+ const unconfirmed=funds.filter(x=>!(x.peak>0)).length;
+ $("sigBase").textContent=funds.length?(unconfirmed?unconfirmed+" 只标的未确认 strategy_base_high，不输出五阶档位；须人工核对策略基准后启用。":"全部标的策略基准已确认。"):"等待行情数据…";
+ $("watchList").innerHTML=funds.length?funds.map(x=>{
+  const [st,cls]=statusInfo(x.rawStatus);
+  const ratio=(x.peak>0&&x.price>0)?x.price/x.peak:null;
+  const tName=ratio?tier(ratio)[1].split(" · ")[0]:"基准待确认";
+  const isBan=(x.price>0&&x.low>0&&x.price>=x.low*3);
+  const chg=x.change==null?"":'<span class="'+(x.change>0?"red":"green")+'">'+pct(x.change)+"</span>";
+  return '<div class="etf"><div><b>'+esc(x.name||x.code)+'</b><div class="ticker">'+esc(x.code)+" · "+esc(x.sector||"")+(x.date?" · "+esc(x.date):"")+'</div><div class="ticker">'+(x.price>0?"高 "+fmt(x.high)+" / 低 "+fmt(x.low):"价格缺失")+" · "+(isBan?'<span class="red">触发3倍禁买线</span>':"未触发禁买线")+'</div></div><div style="text-align:right"><b>'+(x.price>0?fmt(x.price):"—")+"</b>"+chg+'<div class="muted">'+tName+'</div><span class="status '+cls+'">'+st+"</span></div></div>";
+ }).join("")+'<div class="muted" style="margin-top:10px">收盘价为未复权日线口径；抓取失败或旧数据的标的不展示价格。</div>':'<div class="muted">尚无行情记录。</div>';
+}
+function renderSelect(){
+ $("etfSelect").innerHTML=funds.map(x=>'<option value="'+esc(x.code)+'">'+esc(x.name||x.code)+" · "+esc(x.code)+"</option>").join("")+'<option value="manual">手动输入试算（非实时行情）</option>';
+ fillFromSelect();
+}
+function fillFromSelect(){
+ const code=$("etfSelect").value;
+ clearPriceInputs();
+ const f=funds.find(x=>x.code===code);
+ if(f&&f.price>0){
+  $("price").value=f.price;
+  $("peak").value=f.peak>0?f.peak:"";
+  $("low").value=f.low>0?f.low:"";
+  $("anchor").value=f.price;
+ }
+ analyze();
+}
+function renderPortfolio(){
+ $("portfolioList").innerHTML=funds.length?funds.map(x=>{
+  const [st,cls]=statusInfo(x.rawStatus);
+  return '<div class="etf"><div><b>'+esc(x.name||x.code)+'</b><div class="ticker">'+esc(x.code)+" · "+esc(x.sector||"")+(x.date?" · "+esc(x.date):"")+'</div>'+(x.error?'<div class="ticker amber">'+esc(String(x.error).slice(0,70))+"</div>":"")+'</div><span class="status '+cls+'">'+st+"</span></div>";
+ }).join(""):'<div class="muted">尚无行情记录。</div>';
+}
+function analyze(){
+ const price=+$("price").value,peak=+$("peak").value,low=+$("low").value,anchor=+$("anchor").value;
+ const total=Math.max(0,+$("totalInput").value||0);
+ const hasRatio=price>0&&peak>0;
+ if(hasRatio){
+  const r=price/peak,[t,name,action]=tier(r);
+  $("ratio").textContent=r.toFixed(3);
+  $("tierStatus").textContent=name;
+  $("tierStatus").className="status "+(t>=4?"ok":t===1?"bad":"warn");
+  $("actionText").textContent="策略动作："+action;
+  document.querySelectorAll("#tierBar i").forEach((e,i)=>e.classList.toggle("on",i===t-1));
+ }else{
+  $("ratio").textContent="—";
+  $("tierStatus").textContent="策略基准待确认";
+  $("tierStatus").className="status warn";
+  $("actionText").textContent="策略基准高点（strategy_base_high）未确认或行情缺失，不输出档位与长线建仓价格；下方网格计算仅为按输入参数的试算。";
+  document.querySelectorAll("#tierBar i").forEach(e=>e.classList.remove("on"));
+ }
+ if(low>0&&price>0){
+  const ban=low*3,blocked=price>=ban;
+  $("banTitle").textContent=blocked?"触发防追高禁买铁律":"防追高检查：未触发";
+  $("banTitle").className=blocked?"red":"green";
+  $("banText").textContent="禁买线 = 历史最低价 × 3 = "+fmt(ban)+"元；当前"+(blocked?"已达到/超过禁买线，禁止新增买入。":"未触发禁买线。")+"（与五阶档位独立判断）";
+  $("banText").className="muted "+(blocked?"red":"");
+ }else{
+  $("banTitle").textContent="防追高检查";$("banTitle").className="";
+  $("banText").textContent="缺少历史最低价或当前价，不判断禁买线。";$("banText").className="muted";
+ }
+ const budget=+$("gridBudget").value||0,drop=(+$("dropPct").value||5)/100,rise=(+$("risePct").value||10)/100;
+ const levels=Math.max(1,Math.min(20,+$("gridLevels").value||5));
+ $("perGrid").textContent=money(budget/levels);
+ if(anchor>0){
+  let rows="";for(let i=1;i<=levels;i++){const buy=anchor*Math.pow(1-drop,i);rows+="<tr><td>"+i+"</td><td>"+fmt(buy)+"</td><td>"+fmt(buy*(1+rise))+"</td><td>"+money(budget/levels)+"</td></tr>"}
+  $("gridTable").innerHTML=rows;
+ }else{$("gridTable").innerHTML='<tr><td colspan="4" class="muted">未获取到当前价格，未生成网格参考价。可手动填写「网格锚定价」做纯计算试算。</td></tr>'}
+ if(hasRatio){
+  const longBudget=total*.3/10;
+  $("longTable").innerHTML=[[.4,.2],[.35,.3],[.3,.5]].map(([r,p])=>"<tr><td>"+r.toFixed(2)+"</td><td>"+fmt(peak*r)+"</td><td>"+(p*100)+"%</td><td>"+money(longBudget*p)+"</td></tr>").join("");
+ }else{$("longTable").innerHTML='<tr><td colspan="4" class="muted">策略基准未确认，不输出建仓价格。</td></tr>'}
+ const tribute=total*.2/10;
+ $("tributeStep").textContent=money(tribute*.1);
+ $("tributeTotal").textContent=money(tribute);
+}
+function updateBudget(){
+ const total=Math.max(0,+$("totalInput").value||0);
+ localStorage.setItem("knifeTotal",String(total));
+ const g=total*.3,l=total*.3,t=total*.2,r=total*.2;
+ $("pGrid").textContent=money(g);$("pLong").textContent=money(l);$("pTribute").textContent=money(t);$("pReserve").textContent=money(r);
+ $("totalDisplay").textContent=money(total);
+ $("gridAmt").textContent=(g/10000).toFixed(1)+"万";$("longAmt").textContent=(l/10000).toFixed(1)+"万";
+ $("tributeAmt").textContent=(t/10000).toFixed(1)+"万";$("reserveAmt").textContent=(r/10000).toFixed(1)+"万";
+ analyze();
+}
+function getTrades(){try{return JSON.parse(localStorage.getItem("knifeTrades")||"[]")}catch(e){return []}}
+function renderTrades(){const a=getTrades();$("tradeTable").innerHTML=a.length?a.slice().reverse().map(x=>"<tr><td>"+esc(x.date)+"</td><td>"+esc(x.code)+"</td><td>"+esc(x.type)+"/"+esc(x.side)+"</td><td>"+esc(x.price)+"</td><td>"+esc(x.qty)+"</td></tr>").join(""):'<tr><td colspan="5" class="muted">暂无交易记录</td></tr>'}
+function addTrade(){const x={date:new Date().toLocaleDateString("zh-CN"),code:$("tradeCode").value.trim(),type:$("tradeType").value,side:$("tradeSide").value,price:(+$("tradePrice").value).toFixed(3),qty:+$("tradeQty").value,fee:+$("tradeFee").value};if(!x.code||!(+x.price>0)||!(x.qty>0)){alert("请检查代码、价格和份额");return}const a=getTrades();a.push(x);localStorage.setItem("knifeTrades",JSON.stringify(a));renderTrades();alert("已保存到当前浏览器本地")}
+function clearTrades(){if(confirm("确定清空本机台账记录？")){localStorage.removeItem("knifeTrades");renderTrades()}}
+function setupChecks(){["monthChecks","quarterChecks"].forEach(id=>{const box=$(id),key="checks_"+id;let saved=[];try{saved=JSON.parse(localStorage.getItem(key)||"[]")}catch(e){}box.querySelectorAll("input").forEach((el,i)=>{el.checked=!!saved[i];el.addEventListener("change",()=>{localStorage.setItem(key,JSON.stringify([...box.querySelectorAll("input")].map(y=>y.checked)));updateProgress()})})});updateProgress()}
+function updateProgress(){["monthChecks","quarterChecks"].forEach((id,i)=>{const all=[...document.querySelectorAll("#"+id+" input")],done=all.filter(x=>x.checked).length;$(i?"quarterProgress":"monthProgress").textContent=done+"/"+all.length+" 已完成"})}
+document.querySelectorAll(".navbtn").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.page)));
+$("etfSelect").addEventListener("change",fillFromSelect);
+["price","peak","low","anchor","gridBudget","dropPct","risePct","gridLevels"].forEach(id=>$(id).addEventListener("change",analyze));
+$("totalInput").value=localStorage.getItem("knifeTotal")||1000000;
+updateBudget();renderTrades();setupChecks();loadData();
+</script>
+</body>
+</html>
