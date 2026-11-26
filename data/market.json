@@ -1,24 +1,24 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-25T20:01:18.196368+00:00",
-  "generated_at_beijing": "2026-11-26T04:01:18.196354+08:00",
+  "generated_at": "2026-11-26T19:46:32.498286+00:00",
+  "generated_at_beijing": "2026-11-27T03:46:32.498274+08:00",
   "source": "AKShare fund_etf_hist_em / Eastmoney",
   "frequency": "daily_after_close",
   "price_basis": "未复权",
-  "success_count": 6,
+  "success_count": 1,
   "total_count": 10,
   "items": [
     {
       "code": "510300",
       "name": "沪深300ETF",
       "sector": "宽基",
-      "date": "2026-11-25",
-      "close": 3.97,
-      "prev_close": 4.033,
-      "change_pct": -1.5621125712868889,
+      "date": "2026-11-26",
+      "close": 3.959,
+      "prev_close": 3.97,
+      "change_pct": -0.27707808564232383,
       "high": 5.933,
       "low": 2.04,
-      "amount": 7911780481.0,
+      "amount": 3419450769.0,
       "strategy_base_high": null,
       "strategy_base_source": "待人工确认",
       "price_basis": "未复权",
@@ -39,8 +39,8 @@
       "strategy_base_high": null,
       "strategy_base_source": "待人工确认",
       "price_basis": "未复权",
-      "status": "ok",
-      "error": null
+      "status": "stale",
+      "error": "Push2RateLimitError: 东方财富 push2 行情服务器断开了连接，通常是短时间内请求过多，当前 IP 被临时限流。首次限流一般约 5 分钟后恢复，反复触发后可能需要 40 分钟以上；等待期间不要重复调用东方财富的行情接口，否则会延长限流。"
     },
     {
       "code": "159928",
@@ -56,8 +56,8 @@
       "strategy_base_high": null,
       "strategy_base_source": "待人工确认",
       "price_basis": "未复权",
-      "status": "ok",
-      "error": null
+      "status": "stale",
+      "error": "Push2RateLimitError: 东方财富 push2 行情服务器断开了连接，通常是短时间内请求过多，当前 IP 被临时限流。首次限流一般约 5 分钟后恢复，反复触发后可能需要 40 分钟以上；等待期间不要重复调用东方财富的行情接口，否则会延长限流。"
     },
     {
       "code": "588000",
@@ -73,8 +73,8 @@
       "strategy_base_high": null,
       "strategy_base_source": "待人工确认",
       "price_basis": "未复权",
-      "status": "ok",
-      "error": null
+      "status": "stale",
+      "error": "Push2RateLimitError: 东方财富 push2 行情服务器断开了连接，通常是短时间内请求过多，当前 IP 被临时限流。首次限流一般约 5 分钟后恢复，反复触发后可能需要 40 分钟以上；等待期间不要重复调用东方财富的行情接口，否则会延长限流。"
     },
     {
       "code": "516160",
@@ -90,8 +90,8 @@
       "strategy_base_high": null,
       "strategy_base_source": "待人工确认",
       "price_basis": "未复权",
-      "status": "ok",
-      "error": null
+      "status": "stale",
+      "error": "Push2RateLimitError: 东方财富 push2 行情服务器断开了连接，通常是短时间内请求过多，当前 IP 被临时限流。首次限流一般约 5 分钟后恢复，反复触发后可能需要 40 分钟以上；等待期间不要重复调用东方财富的行情接口，否则会延长限流。"
     },
     {
       "code": "159995",
@@ -107,8 +107,8 @@
       "strategy_base_high": null,
       "strategy_base_source": "待人工确认",
       "price_basis": "未复权",
-      "status": "ok",
-      "error": null
+      "status": "stale",
+      "error": "Push2RateLimitError: 东方财富 push2 行情服务器断开了连接，通常是短时间内请求过多，当前 IP 被临时限流。首次限流一般约 5 分钟后恢复，反复触发后可能需要 40 分钟以上；等待期间不要重复调用东方财富的行情接口，否则会延长限流。"
     },
     {
       "code": "159920",
